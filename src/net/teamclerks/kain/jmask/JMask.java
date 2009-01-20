@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -23,6 +24,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 
 import net.teamclerks.kain.jmask.dialog.CPPrompt;
+import net.teamclerks.kain.jmask.maskaction.MaskAction;
 import net.teamclerks.kain.jmask.panel.JMaskPanel;
 import net.teamclerks.kain.masks.Mask;
 import net.teamclerks.kain.masks.exception.MaskException;
@@ -54,9 +56,13 @@ public class JMask extends JFrame implements ActionListener
     
   private JDialog popup = null;
   
-  private Mask mask;
-  
   private CPPrompt prompt;
+  
+  private ArrayList<MaskAction> actions;
+  
+  private int actionIndex;
+  
+  private JMenuBar buttons;
 
   /**
    * Initializes a Nanoshop panel.
@@ -67,7 +73,10 @@ public class JMask extends JFrame implements ActionListener
     panel = new JMaskPanel();
     
     JScrollPane scroll = new JScrollPane(panel);
+
+    this.addMenu();
     
+    add(buttons, BorderLayout.NORTH);
     add(scroll, BorderLayout.CENTER);
     
     this.setSize(640,480);
@@ -75,10 +84,11 @@ public class JMask extends JFrame implements ActionListener
     
     this.setLocationRelativeTo(null);
     this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    this.addMenu();
     panel.setVisible(true);
     panel.addMouseListener(panel);
     panel.addMouseMotionListener(panel);
+    actions = new ArrayList<MaskAction>();
+    actionIndex = 0;
   }
   
   /**
@@ -111,10 +121,11 @@ public class JMask extends JFrame implements ActionListener
    */
   private void setImage(BufferedImage image)
   {
+    actions = new ArrayList<MaskAction>();
+    actionIndex = 0;
     panel.setImage(image);
     panel.revalidate();
-    JMenuBar menu = this.getJMenuBar();
-    for(Component c: menu.getComponents())
+    for(Component c: buttons.getComponents())
     {
       if(c instanceof JButton)
       {
@@ -210,10 +221,11 @@ public class JMask extends JFrame implements ActionListener
         Rectangle box = panel.getRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        mask = new CP(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new CP(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_CP);
         ((CP)mask).setCode(prompt.getCode());
         panel.setImage(mask.mask());
+        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
         prompt.setCode("");
         panel.repaint();
       }
@@ -222,9 +234,10 @@ public class JMask extends JFrame implements ActionListener
         Rectangle box = panel.getRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        mask = new RGBRotate(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new RGBRotate(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_ROTATE_RGB);
         panel.setImage(mask.mask());
+        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
         panel.repaint();
       }
       if ( _button.equals("XOR"))
@@ -232,9 +245,10 @@ public class JMask extends JFrame implements ActionListener
         Rectangle box = panel.getRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        mask = new Xor(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Xor(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_XOR);
         panel.setImage(mask.mask());
+        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
         panel.repaint();
       }
       if ( _button.equals("Horizontal Flip"))
@@ -242,9 +256,10 @@ public class JMask extends JFrame implements ActionListener
         Rectangle box = panel.getRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        mask = new Flip(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Flip(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_HFLIP);
         panel.setImage(mask.mask());
+        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
         panel.repaint();
       }
       if ( _button.equals("Vertical Flip"))
@@ -252,9 +267,10 @@ public class JMask extends JFrame implements ActionListener
         Rectangle box = panel.getRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        mask = new Flip(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Flip(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_VFLIP);
         panel.setImage(mask.mask());
+        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
         panel.repaint();
       }
       if ( _button.equals("Negative"))
@@ -262,9 +278,10 @@ public class JMask extends JFrame implements ActionListener
         Rectangle box = panel.getRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        mask = new Negative(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Negative(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_NEGATIVE);
         panel.setImage(mask.mask());
+        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
         panel.repaint();
       }
       if ( _button.equals("Vertical Glass"))
@@ -272,9 +289,10 @@ public class JMask extends JFrame implements ActionListener
         Rectangle box = panel.getRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        mask = new Glass(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Glass(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_VGLASS);
         panel.setImage(mask.mask());
+        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
         panel.repaint();
       }
       if ( _button.equals("Horizontal Glass"))
@@ -282,9 +300,10 @@ public class JMask extends JFrame implements ActionListener
         Rectangle box = panel.getRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        mask = new Glass(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Glass(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_HGLASS);
         panel.setImage(mask.mask());
+        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
         panel.repaint();
       }
       if ( _button.equals("Win"))
@@ -292,9 +311,10 @@ public class JMask extends JFrame implements ActionListener
         Rectangle box = panel.getRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        mask = new Win(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Win(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_WIN);
         panel.setImage(mask.mask());
+        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
         panel.repaint();
       }
       if ( _button.equals("Meko-"))
@@ -302,9 +322,10 @@ public class JMask extends JFrame implements ActionListener
         Rectangle box = panel.getRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        mask = new Meko(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Meko(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_MEKO_MINUS);
         panel.setImage(mask.mask());
+        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
         panel.repaint();
       }
       if ( _button.equals("Meko+"))
@@ -312,9 +333,10 @@ public class JMask extends JFrame implements ActionListener
         Rectangle box = panel.getRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        mask = new Meko(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Meko(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_MEKO_PLUS);
         panel.setImage(mask.mask());
+        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
         panel.repaint();
       }
       if ( _button.equals("FL"))
@@ -322,9 +344,10 @@ public class JMask extends JFrame implements ActionListener
         Rectangle box = panel.getRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        mask = new FL(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new FL(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_FL);
         panel.setImage(mask.mask());
+        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
         panel.repaint();
       }
       if ( _button.equals("Q0"))
@@ -332,9 +355,10 @@ public class JMask extends JFrame implements ActionListener
         Rectangle box = panel.getRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        mask = new Q0(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Q0(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_Q0);
         panel.setImage(mask.mask());
+        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
         panel.repaint();
       }
       if ( _button.equals("CP-PROMPT"))
@@ -350,6 +374,8 @@ public class JMask extends JFrame implements ActionListener
     
     if ( _button.equals("Close File"))
     {
+      actions = new ArrayList<MaskAction>();
+      actionIndex = 0;
       panel.setImage(null);
       panel.revalidate();
       for(Component c: this.getJMenuBar().getComponents())
@@ -378,6 +404,8 @@ public class JMask extends JFrame implements ActionListener
   {
     //Create a menubar
     JMenuBar _menuBar = new JMenuBar();
+    
+    JMenuBar _menu2 = new JMenuBar();
     
     //Build the first menu.
     JMenu _menu = new JMenu("File");
@@ -410,7 +438,7 @@ public class JMask extends JFrame implements ActionListener
     _rgbRot.setPreferredSize(new Dimension(27,27));
     _rgbRot.addActionListener(this);
     _rgbRot.setEnabled(false);
-    _menuBar.add(_rgbRot);
+    _menu2.add(_rgbRot);
 
     JButton _xor = new JButton();
     _xor.setActionCommand("XOR");
@@ -418,7 +446,7 @@ public class JMask extends JFrame implements ActionListener
     _xor.setPreferredSize(new Dimension(27,27));
     _xor.addActionListener(this);
     _xor.setEnabled(false);
-    _menuBar.add(_xor);
+    _menu2.add(_xor);
 
     JButton _hflip = new JButton();
     _hflip.setActionCommand("Horizontal Flip");
@@ -426,7 +454,7 @@ public class JMask extends JFrame implements ActionListener
     _hflip.setPreferredSize(new Dimension(27,27));
     _hflip.addActionListener(this);
     _hflip.setEnabled(false);
-    _menuBar.add(_hflip);
+    _menu2.add(_hflip);
 
     JButton _vflip = new JButton();
     _vflip.setActionCommand("Vertical Flip");
@@ -434,7 +462,7 @@ public class JMask extends JFrame implements ActionListener
     _vflip.setPreferredSize(new Dimension(27,27));
     _vflip.addActionListener(this);
     _vflip.setEnabled(false);
-    _menuBar.add(_vflip);
+    _menu2.add(_vflip);
    
     JButton _neg = new JButton();
     _neg.setActionCommand("Negative");
@@ -442,7 +470,7 @@ public class JMask extends JFrame implements ActionListener
     _neg.setPreferredSize(new Dimension(27,27));
     _neg.addActionListener(this);
     _neg.setEnabled(false);
-    _menuBar.add(_neg);
+    _menu2.add(_neg);
     
     JButton _vglass = new JButton();
     _vglass.setActionCommand("Vertical Glass");
@@ -450,7 +478,7 @@ public class JMask extends JFrame implements ActionListener
     _vglass.setPreferredSize(new Dimension(27,27));
     _vglass.addActionListener(this);
     _vglass.setEnabled(false);
-    _menuBar.add(_vglass);
+    _menu2.add(_vglass);
     
     JButton _hglass = new JButton();
     _hglass.setActionCommand("Horizontal Glass");
@@ -458,7 +486,7 @@ public class JMask extends JFrame implements ActionListener
     _hglass.setPreferredSize(new Dimension(27,27));
     _hglass.addActionListener(this);
     _hglass.setEnabled(false);
-    _menuBar.add(_hglass);
+    _menu2.add(_hglass);
     
     JButton _win = new JButton();
     _win.setActionCommand("Win");
@@ -466,7 +494,7 @@ public class JMask extends JFrame implements ActionListener
     _win.setPreferredSize(new Dimension(27,27));
     _win.addActionListener(this);
     _win.setEnabled(false);
-    _menuBar.add(_win);
+    _menu2.add(_win);
     
     JButton _mekoMinus = new JButton();
     _mekoMinus.setActionCommand("Meko-");
@@ -474,7 +502,7 @@ public class JMask extends JFrame implements ActionListener
     _mekoMinus.setPreferredSize(new Dimension(27,27));
     _mekoMinus.addActionListener(this);
     _mekoMinus.setEnabled(false);
-    _menuBar.add(_mekoMinus);
+    _menu2.add(_mekoMinus);
     
     JButton _mekoPlus = new JButton();
     _mekoPlus.setActionCommand("Meko+");
@@ -482,7 +510,7 @@ public class JMask extends JFrame implements ActionListener
     _mekoPlus.setPreferredSize(new Dimension(27,27));
     _mekoPlus.addActionListener(this);
     _mekoPlus.setEnabled(false);
-    _menuBar.add(_mekoPlus);
+    _menu2.add(_mekoPlus);
     
     JButton _fl = new JButton();
     _fl.setActionCommand("FL");
@@ -490,7 +518,7 @@ public class JMask extends JFrame implements ActionListener
     _fl.setPreferredSize(new Dimension(27,27));
     _fl.addActionListener(this);
     _fl.setEnabled(false);
-    _menuBar.add(_fl);
+    _menu2.add(_fl);
     
     JButton _q0 = new JButton();
     _q0.setActionCommand("Q0");
@@ -498,7 +526,7 @@ public class JMask extends JFrame implements ActionListener
     _q0.setPreferredSize(new Dimension(27,27));
     _q0.addActionListener(this);
     _q0.setEnabled(false);
-    _menuBar.add(_q0);
+    _menu2.add(_q0);
     
     JButton _cp = new JButton();
     _cp.setActionCommand("CP-PROMPT");
@@ -506,9 +534,10 @@ public class JMask extends JFrame implements ActionListener
     _cp.setPreferredSize(new Dimension(27,27));
     _cp.addActionListener(this);
     _cp.setEnabled(false);
-    _menuBar.add(_cp);
-    
+    _menu2.add(_cp);
+
     this.setJMenuBar(_menuBar);
+    buttons = _menu2;
   } 
   
   /**
