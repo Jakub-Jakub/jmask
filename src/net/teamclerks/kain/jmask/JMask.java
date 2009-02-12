@@ -151,6 +151,11 @@ public class JMask extends JFrame implements ActionListener
   public void actionPerformed(ActionEvent e)
   {
     String _button = new String(e.getActionCommand());
+
+    if ( _button.equals("Quit"))
+    {
+      System.exit(0);
+    }
     
     Object object = e.getSource();
     if (prompt != null  && object == prompt.getCancel())
@@ -464,25 +469,9 @@ public class JMask extends JFrame implements ActionListener
       actions = new Stack<MaskAction>();
       panel.setImage(null);
       panel.revalidate();
-      for(Component c: this.getJMenuBar().getComponents())
-      {
-        if(c instanceof JButton)
-        {
-          c.setEnabled(false);
-        }
-        else if(c instanceof JMenu)
-        {
-          // Can't close a file if it's already closed.
-          ((JMenu)c).getMenuComponent(1).setEnabled(false);
-          ((JMenu)c).getMenuComponent(2).setEnabled(false);
-        }
-      }
+      ((JMenu)this.getJMenuBar().getComponents()[0]).getMenuComponent(1).setEnabled(false);
+      ((JMenu)this.getJMenuBar().getComponents()[0]).getMenuComponent(2).setEnabled(false);
       repaint();
-    }
-    
-    if ( _button.equals("Exit"))
-    {
-      System.exit(0);
     }
   }
   
@@ -499,23 +488,31 @@ public class JMask extends JFrame implements ActionListener
     
     JMenuItem _open = new JMenuItem("Open File...");
     _open.addActionListener(this);
+    _open.setAccelerator(KeyStroke.getKeyStroke(
+        'O', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
     _menu.add(_open);
     
     JMenuItem _close = new JMenuItem("Save As...");
     _close.addActionListener(this);
     _close.setEnabled(false);
+    _close.setAccelerator(KeyStroke.getKeyStroke(
+        'S', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
     _menu.add(_close);
     
     JMenuItem _save = new JMenuItem("Close File");
     _save.addActionListener(this);
     _save.setEnabled(false);
+    _save.setAccelerator(KeyStroke.getKeyStroke(
+        'W', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
     _menu.add(_save);
     
     JSeparator _blank = new JSeparator();
     _menu.add(_blank);
     
-    JMenuItem _exit = new JMenuItem("Exit");
+    JMenuItem _exit = new JMenuItem("Quit");
     _exit.addActionListener(this);
+    _exit.setAccelerator(KeyStroke.getKeyStroke(
+        'Q', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
     _menu.add(_exit);
     
     //Build the second menu.
