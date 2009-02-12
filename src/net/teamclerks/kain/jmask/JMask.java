@@ -54,6 +54,9 @@ public class JMask extends JFrame implements ActionListener
 {
   private static final long serialVersionUID = -7235844065724493647L;
   
+  private static final int ZOOM_MULTIPLIER_MAX = 3;
+  private static final int ZOOM_MULTIPLIER_MIN = 1;
+  
   private JMaskPanel panel;
     
   private JDialog popup = null;
@@ -177,6 +180,8 @@ public class JMask extends JFrame implements ActionListener
         // Now that we have a file, we can close it.
         ((JMenu)this.getJMenuBar().getComponents()[0]).getMenuComponent(1).setEnabled(true);
         ((JMenu)this.getJMenuBar().getComponents()[0]).getMenuComponent(2).setEnabled(true);
+        ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(0).setEnabled(true);
+        ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(1).setEnabled(true);
       }
     }
     
@@ -215,6 +220,36 @@ public class JMask extends JFrame implements ActionListener
     {
       if(panel.getImage() == null) return;
       
+      if ( _button.equals("Zoom In"))
+      {
+        if(panel.getZoomMultiplier() < ZOOM_MULTIPLIER_MAX)
+        {
+          ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(1).setEnabled(true);
+          panel.setZoomMultiplier(panel.getZoomMultiplier()+1);
+          panel.setMaximumSize(new Dimension(panel.getWidth()*panel.getZoomMultiplier(),panel.getHeight()*panel.getZoomMultiplier()));
+          if(panel.getZoomMultiplier() == ZOOM_MULTIPLIER_MAX)
+          {
+            ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(0).setEnabled(false);
+          }
+          panel.revalidate();
+          repaint();
+        }
+      }
+      if ( _button.equals("Zoom Out"))
+      {
+        if(panel.getZoomMultiplier() > ZOOM_MULTIPLIER_MIN)
+        {
+          ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(0).setEnabled(true);
+          panel.setZoomMultiplier(panel.getZoomMultiplier()-1);
+          panel.setMaximumSize(new Dimension(panel.getWidth()*panel.getZoomMultiplier(),panel.getHeight()*panel.getZoomMultiplier()));
+          if(panel.getZoomMultiplier() == ZOOM_MULTIPLIER_MIN)
+          {
+            ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(1).setEnabled(false);
+          }
+          panel.revalidate();
+          repaint();
+        }
+      }
       if ( _button.equals("Undo"))
       {
         if(actions.size() == 1)
@@ -223,7 +258,10 @@ public class JMask extends JFrame implements ActionListener
         }
         // Bam... undo
         MaskAction undo = actions.pop();
+        int zoomMultilplier = panel.getZoomMultiplier();
+        panel.setZoomMultiplier(1);
         panel.setImage(undo.getMask().undoMask());
+        panel.setZoomMultiplier(zoomMultilplier);
         redoActions.push(undo);
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(true);
         panel.repaint();
@@ -236,7 +274,10 @@ public class JMask extends JFrame implements ActionListener
         }
         // Bam... redo
         MaskAction redo = redoActions.pop();
+        int zoomMultilplier = panel.getZoomMultiplier();
+        panel.setZoomMultiplier(1);
         panel.setImage(redo.getMask().mask());
+        panel.setZoomMultiplier(zoomMultilplier);
         actions.push(redo);
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
@@ -245,14 +286,14 @@ public class JMask extends JFrame implements ActionListener
       if (prompt != null && object == prompt.getOkay())
       {
         prompt.setVisible(false);
-        Rectangle box = panel.getRectangle();
+        Rectangle box = panel.getScaledRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        Mask mask = new CP(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new CP(panel.getScaledImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_CP);
         ((CP)mask).setCode(prompt.getCode());
         panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
         // Always clear the redo stack
         redoActions.clear();
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
@@ -263,13 +304,13 @@ public class JMask extends JFrame implements ActionListener
       }
       if ( _button.equals("RGB Rotate"))
       {
-        Rectangle box = panel.getRectangle();
+        Rectangle box = panel.getScaledRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        Mask mask = new RGBRotate(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new RGBRotate(panel.getScaledImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_ROTATE_RGB);
         panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
         // Always clear the redo stack
         redoActions.clear();
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
@@ -279,13 +320,13 @@ public class JMask extends JFrame implements ActionListener
       }
       if ( _button.equals("XOR"))
       {
-        Rectangle box = panel.getRectangle();
+        Rectangle box = panel.getScaledRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        Mask mask = new Xor(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Xor(panel.getScaledImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_XOR);
         panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
         // Always clear the redo stack
         redoActions.clear();
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
@@ -295,13 +336,13 @@ public class JMask extends JFrame implements ActionListener
       }
       if ( _button.equals("Horizontal Flip"))
       {
-        Rectangle box = panel.getRectangle();
+        Rectangle box = panel.getScaledRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        Mask mask = new Flip(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Flip(panel.getScaledImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_HFLIP);
         panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
         // Always clear the redo stack
         redoActions.clear();
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
@@ -311,13 +352,13 @@ public class JMask extends JFrame implements ActionListener
       }
       if ( _button.equals("Vertical Flip"))
       {
-        Rectangle box = panel.getRectangle();
+        Rectangle box = panel.getScaledRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        Mask mask = new Flip(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Flip(panel.getScaledImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_VFLIP);
         panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
         // Always clear the redo stack
         redoActions.clear();
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
@@ -327,13 +368,13 @@ public class JMask extends JFrame implements ActionListener
       }
       if ( _button.equals("Negative"))
       {
-        Rectangle box = panel.getRectangle();
+        Rectangle box = panel.getScaledRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        Mask mask = new Negative(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Negative(panel.getScaledImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_NEGATIVE);
         panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
         // Always clear the redo stack
         redoActions.clear();
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
@@ -343,13 +384,13 @@ public class JMask extends JFrame implements ActionListener
       }
       if ( _button.equals("Vertical Glass"))
       {
-        Rectangle box = panel.getRectangle();
+        Rectangle box = panel.getScaledRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        Mask mask = new Glass(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Glass(panel.getScaledImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_VGLASS);
         panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
         // Always clear the redo stack
         redoActions.clear();
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
@@ -359,13 +400,13 @@ public class JMask extends JFrame implements ActionListener
       }
       if ( _button.equals("Horizontal Glass"))
       {
-        Rectangle box = panel.getRectangle();
+        Rectangle box = panel.getScaledRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        Mask mask = new Glass(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Glass(panel.getScaledImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_HGLASS);
         panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
         // Always clear the redo stack
         redoActions.clear();
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
@@ -375,13 +416,13 @@ public class JMask extends JFrame implements ActionListener
       }
       if ( _button.equals("Win"))
       {
-        Rectangle box = panel.getRectangle();
+        Rectangle box = panel.getScaledRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        Mask mask = new Win(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Win(panel.getScaledImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_WIN);
         panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
         // Always clear the redo stack
         redoActions.clear();
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
@@ -391,13 +432,13 @@ public class JMask extends JFrame implements ActionListener
       }
       if ( _button.equals("Meko-"))
       {
-        Rectangle box = panel.getRectangle();
+        Rectangle box = panel.getScaledRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        Mask mask = new Meko(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Meko(panel.getScaledImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_MEKO_MINUS);
         panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
         // Always clear the redo stack
         redoActions.clear();
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
@@ -407,13 +448,13 @@ public class JMask extends JFrame implements ActionListener
       }
       if ( _button.equals("Meko+"))
       {
-        Rectangle box = panel.getRectangle();
+        Rectangle box = panel.getScaledRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        Mask mask = new Meko(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Meko(panel.getScaledImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_MEKO_PLUS);
         panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
         // Always clear the redo stack
         redoActions.clear();
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
@@ -423,13 +464,13 @@ public class JMask extends JFrame implements ActionListener
       }
       if ( _button.equals("FL"))
       {
-        Rectangle box = panel.getRectangle();
+        Rectangle box = panel.getScaledRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        Mask mask = new FL(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new FL(panel.getScaledImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_FL);
         panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
         // Always clear the redo stack
         redoActions.clear();
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
@@ -439,13 +480,13 @@ public class JMask extends JFrame implements ActionListener
       }
       if ( _button.equals("Q0"))
       {
-        Rectangle box = panel.getRectangle();
+        Rectangle box = panel.getScaledRectangle();
         int x1 = box.x+box.width;
         int y1 = box.y+box.height;
-        Mask mask = new Q0(panel.getImage(),box.x,box.y,x1,y1);
+        Mask mask = new Q0(panel.getScaledImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_Q0);
         panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
         // Always clear the redo stack
         redoActions.clear();
         ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
@@ -471,6 +512,8 @@ public class JMask extends JFrame implements ActionListener
       panel.revalidate();
       ((JMenu)this.getJMenuBar().getComponents()[0]).getMenuComponent(1).setEnabled(false);
       ((JMenu)this.getJMenuBar().getComponents()[0]).getMenuComponent(2).setEnabled(false);
+      ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(0).setEnabled(false);
+      ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(1).setEnabled(false);
       repaint();
     }
   }
@@ -532,6 +575,24 @@ public class JMask extends JFrame implements ActionListener
         'Y', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
     _redo.setEnabled(false);
     editmenu.add(_redo);
+
+    //Build the third menu.
+    JMenu zoomMenu = new JMenu("Zoom");
+    _menuBar.add(zoomMenu);
+    
+    JMenuItem zoomIn = new JMenuItem("Zoom In");
+    zoomIn.addActionListener(this);
+    zoomIn.setAccelerator(KeyStroke.getKeyStroke(
+        '=', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
+    zoomIn.setEnabled(false);
+    zoomMenu.add(zoomIn);
+    
+    JMenuItem zoomOut = new JMenuItem("Zoom Out");
+    zoomOut.addActionListener(this);
+    zoomOut.setAccelerator(KeyStroke.getKeyStroke(
+        '-', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
+    zoomOut.setEnabled(false);
+    zoomMenu.add(zoomOut);
     
     JButton _rgbRot = new JButton();
     _rgbRot.setActionCommand("RGB Rotate");

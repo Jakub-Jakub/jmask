@@ -6,6 +6,8 @@ import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 
 import javax.swing.JPanel;
@@ -18,14 +20,19 @@ public class JMaskPanel extends JPanel implements Scrollable, MouseInputListener
 
   private BufferedImage image;
   
+  private BufferedImage originalImage;
+  
   private Rectangle currentRect;
 
   private Rectangle rectToDraw;
 
   private Rectangle previousRectDrawn;
   
+  private int zoomMultiplier;
+  
   public JMaskPanel()
   {
+    zoomMultiplier = 1;
     currentRect = null;
     rectToDraw = null;
     previousRectDrawn = new Rectangle();
@@ -51,14 +58,57 @@ public class JMaskPanel extends JPanel implements Scrollable, MouseInputListener
     }
   }
   
+  public void setZoomMultiplier(int multInput)
+  {
+    double mult = (multInput > this.zoomMultiplier) ?
+         multInput :
+         (double)((double)1/(double)this.zoomMultiplier);
+    this.zoomMultiplier = multInput;
+    AffineTransform transform = new AffineTransform();
+    transform.scale(multInput, multInput);
+    AffineTransformOp transOp = 
+      new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
+    if(rectToDraw != null)
+    {
+      rectToDraw = new Rectangle((int)(rectToDraw.x*mult), (int)(rectToDraw.y*mult), (int)(rectToDraw.width*mult), (int)(rectToDraw.height*mult));
+      repaint(rectToDraw.x, rectToDraw.y, rectToDraw.width,rectToDraw.height);
+    }
+    image = transOp.filter(originalImage, null);
+  }
+  public int getZoomMultiplier()
+  {
+    return this.zoomMultiplier;
+  }
+  
   public Rectangle getRectangle()
   {
     return rectToDraw;
   }
   
+  public Rectangle getScaledRectangle()
+  {
+    double mult = (double)1/(double)this.zoomMultiplier;
+    Rectangle rect = 
+      new Rectangle((int)(rectToDraw.x*mult),(int)(rectToDraw.y*mult),
+                    (int)(rectToDraw.width*mult),(int)(rectToDraw.height*mult));
+    return rect;
+  }
+  
   public void setImage(BufferedImage bi)
   {
-    image = bi;
+    originalImage = bi;
+    if(bi == null)
+    {
+      image = null;
+    }
+    else
+    {
+      AffineTransform transform = new AffineTransform();
+      transform.scale(this.zoomMultiplier, this.zoomMultiplier);
+      AffineTransformOp transOp = 
+        new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
+      image = transOp.filter(originalImage, null);
+    }
     if(bi != null)
       this.setMaximumSize(new Dimension(bi.getWidth(),bi.getHeight()));
   }
@@ -66,6 +116,11 @@ public class JMaskPanel extends JPanel implements Scrollable, MouseInputListener
   public BufferedImage getImage() 
   {
     return image;
+  }
+  
+  public BufferedImage getScaledImage()
+  {
+    return originalImage;
   }
 
   public void mouseClicked(MouseEvent e)
@@ -102,7 +157,7 @@ public class JMaskPanel extends JPanel implements Scrollable, MouseInputListener
       y = 0;
     }
     currentRect = new Rectangle(x, y, 0, 0);
-    updateDrawableRect(getWidth(), getHeight());
+    updateDrawableRect();
     repaint();
   }
 
@@ -142,18 +197,20 @@ public class JMaskPanel extends JPanel implements Scrollable, MouseInputListener
       currentRect.y = 0;
     }
     currentRect.setSize(x - currentRect.x, y - currentRect.y);
-    updateDrawableRect(getWidth(), getHeight());
+    updateDrawableRect();
     Rectangle totalRepaint = rectToDraw.union(previousRectDrawn);
     repaint(totalRepaint.x, totalRepaint.y, totalRepaint.width,
         totalRepaint.height);
   }
   
-  private void updateDrawableRect(int compWidth, int compHeight) 
+  private void updateDrawableRect() 
   {
-    int x = (currentRect.x / 8) * 8;
-    int y = (currentRect.y / 8) * 8;
-    int width = (currentRect.width / 8) * 8;
-    int height = (currentRect.height / 8) * 8;
+    int compWidth = image.getWidth();
+    int compHeight = image.getHeight();
+    int x = (currentRect.x / (8*zoomMultiplier)) * (8*zoomMultiplier);
+    int y = (currentRect.y / (8*zoomMultiplier)) * (8*zoomMultiplier);
+    int width = (currentRect.width / (8*zoomMultiplier)) * (8*zoomMultiplier);
+    int height = (currentRect.height / (8*zoomMultiplier)) * (8*zoomMultiplier);
 
     //Make the width and height positive, if necessary.
     if (width < 0) 
