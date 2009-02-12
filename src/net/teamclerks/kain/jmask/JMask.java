@@ -5,12 +5,13 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Stack;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -22,6 +23,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.KeyStroke;
 
 import net.teamclerks.kain.jmask.dialog.CPPrompt;
 import net.teamclerks.kain.jmask.maskaction.MaskAction;
@@ -58,9 +60,9 @@ public class JMask extends JFrame implements ActionListener
   
   private CPPrompt prompt;
   
-  private ArrayList<MaskAction> actions;
+  private Stack<MaskAction> actions;
   
-  private int actionIndex;
+  private Stack<MaskAction> redoActions;
   
   private JMenuBar buttons;
 
@@ -87,8 +89,8 @@ public class JMask extends JFrame implements ActionListener
     panel.setVisible(true);
     panel.addMouseListener(panel);
     panel.addMouseMotionListener(panel);
-    actions = new ArrayList<MaskAction>();
-    actionIndex = 0;
+    actions = new Stack<MaskAction>();
+    redoActions = new Stack<MaskAction>();
   }
   
   /**
@@ -121,8 +123,7 @@ public class JMask extends JFrame implements ActionListener
    */
   private void setImage(BufferedImage image)
   {
-    actions = new ArrayList<MaskAction>();
-    actionIndex = 0;
+    actions = new Stack<MaskAction>();
     panel.setImage(image);
     panel.revalidate();
     for(Component c: buttons.getComponents())
@@ -168,15 +169,9 @@ public class JMask extends JFrame implements ActionListener
       {
         //Set the image to display.
         this.setFile(new File(fd.getDirectory(), fd.getFile()));
-        for(Component c: this.getJMenuBar().getComponents())
-        {
-          if(c instanceof JMenu)
-          {
-            // Now that we have a file, we can close it.
-            ((JMenu)c).getMenuComponent(1).setEnabled(true);
-            ((JMenu)c).getMenuComponent(2).setEnabled(true);
-          }
-        }
+        // Now that we have a file, we can close it.
+        ((JMenu)this.getJMenuBar().getComponents()[0]).getMenuComponent(1).setEnabled(true);
+        ((JMenu)this.getJMenuBar().getComponents()[0]).getMenuComponent(2).setEnabled(true);
       }
     }
     
@@ -214,6 +209,33 @@ public class JMask extends JFrame implements ActionListener
     try
     {
       if(panel.getImage() == null) return;
+      
+      if ( _button.equals("Undo"))
+      {
+        if(actions.size() == 1)
+        {
+          ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(false);
+        }
+        // Bam... undo
+        MaskAction undo = actions.pop();
+        panel.setImage(undo.getMask().undoMask());
+        redoActions.push(undo);
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(true);
+        panel.repaint();
+      }
+      if ( _button.equals("Redo"))
+      {
+        if(redoActions.size() == 1)
+        {
+          ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+        }
+        // Bam... redo
+        MaskAction redo = redoActions.pop();
+        panel.setImage(redo.getMask().mask());
+        actions.push(redo);
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+        panel.repaint();
+      }
 
       if (prompt != null && object == prompt.getOkay())
       {
@@ -225,8 +247,13 @@ public class JMask extends JFrame implements ActionListener
         mask.setType(Type.MASK_TYPE_CP);
         ((CP)mask).setCode(prompt.getCode());
         panel.setImage(mask.mask());
-        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getRectangle()));
+        // Always clear the redo stack
+        redoActions.clear();
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
         prompt.setCode("");
+        // Enable the undo menu item
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
       }
       if ( _button.equals("RGB Rotate"))
@@ -237,7 +264,12 @@ public class JMask extends JFrame implements ActionListener
         Mask mask = new RGBRotate(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_ROTATE_RGB);
         panel.setImage(mask.mask());
-        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getRectangle()));
+        // Always clear the redo stack
+        redoActions.clear();
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+        // Enable the undo menu item
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
       }
       if ( _button.equals("XOR"))
@@ -248,7 +280,12 @@ public class JMask extends JFrame implements ActionListener
         Mask mask = new Xor(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_XOR);
         panel.setImage(mask.mask());
-        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getRectangle()));
+        // Always clear the redo stack
+        redoActions.clear();
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+        // Enable the undo menu item
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
       }
       if ( _button.equals("Horizontal Flip"))
@@ -259,7 +296,12 @@ public class JMask extends JFrame implements ActionListener
         Mask mask = new Flip(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_HFLIP);
         panel.setImage(mask.mask());
-        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getRectangle()));
+        // Always clear the redo stack
+        redoActions.clear();
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+        // Enable the undo menu item
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
       }
       if ( _button.equals("Vertical Flip"))
@@ -270,7 +312,12 @@ public class JMask extends JFrame implements ActionListener
         Mask mask = new Flip(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_VFLIP);
         panel.setImage(mask.mask());
-        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getRectangle()));
+        // Always clear the redo stack
+        redoActions.clear();
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+        // Enable the undo menu item
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
       }
       if ( _button.equals("Negative"))
@@ -281,7 +328,12 @@ public class JMask extends JFrame implements ActionListener
         Mask mask = new Negative(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_NEGATIVE);
         panel.setImage(mask.mask());
-        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getRectangle()));
+        // Always clear the redo stack
+        redoActions.clear();
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+        // Enable the undo menu item
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
       }
       if ( _button.equals("Vertical Glass"))
@@ -292,7 +344,12 @@ public class JMask extends JFrame implements ActionListener
         Mask mask = new Glass(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_VGLASS);
         panel.setImage(mask.mask());
-        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getRectangle()));
+        // Always clear the redo stack
+        redoActions.clear();
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+        // Enable the undo menu item
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
       }
       if ( _button.equals("Horizontal Glass"))
@@ -303,7 +360,12 @@ public class JMask extends JFrame implements ActionListener
         Mask mask = new Glass(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_HGLASS);
         panel.setImage(mask.mask());
-        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getRectangle()));
+        // Always clear the redo stack
+        redoActions.clear();
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+        // Enable the undo menu item
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
       }
       if ( _button.equals("Win"))
@@ -314,7 +376,12 @@ public class JMask extends JFrame implements ActionListener
         Mask mask = new Win(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_WIN);
         panel.setImage(mask.mask());
-        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getRectangle()));
+        // Always clear the redo stack
+        redoActions.clear();
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+        // Enable the undo menu item
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
       }
       if ( _button.equals("Meko-"))
@@ -325,7 +392,12 @@ public class JMask extends JFrame implements ActionListener
         Mask mask = new Meko(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_MEKO_MINUS);
         panel.setImage(mask.mask());
-        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getRectangle()));
+        // Always clear the redo stack
+        redoActions.clear();
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+        // Enable the undo menu item
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
       }
       if ( _button.equals("Meko+"))
@@ -336,7 +408,12 @@ public class JMask extends JFrame implements ActionListener
         Mask mask = new Meko(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_MEKO_PLUS);
         panel.setImage(mask.mask());
-        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getRectangle()));
+        // Always clear the redo stack
+        redoActions.clear();
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+        // Enable the undo menu item
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
       }
       if ( _button.equals("FL"))
@@ -347,7 +424,12 @@ public class JMask extends JFrame implements ActionListener
         Mask mask = new FL(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_FL);
         panel.setImage(mask.mask());
-        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getRectangle()));
+        // Always clear the redo stack
+        redoActions.clear();
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+        // Enable the undo menu item
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
       }
       if ( _button.equals("Q0"))
@@ -358,7 +440,12 @@ public class JMask extends JFrame implements ActionListener
         Mask mask = new Q0(panel.getImage(),box.x,box.y,x1,y1);
         mask.setType(Type.MASK_TYPE_Q0);
         panel.setImage(mask.mask());
-        actions.add(actionIndex++, new MaskAction(mask,panel.getRectangle()));
+        actions.push(new MaskAction(mask,panel.getRectangle()));
+        // Always clear the redo stack
+        redoActions.clear();
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+        // Enable the undo menu item
+        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
         panel.repaint();
       }
       if ( _button.equals("CP-PROMPT"))
@@ -374,8 +461,7 @@ public class JMask extends JFrame implements ActionListener
     
     if ( _button.equals("Close File"))
     {
-      actions = new ArrayList<MaskAction>();
-      actionIndex = 0;
+      actions = new Stack<MaskAction>();
       panel.setImage(null);
       panel.revalidate();
       for(Component c: this.getJMenuBar().getComponents())
@@ -431,6 +517,24 @@ public class JMask extends JFrame implements ActionListener
     JMenuItem _exit = new JMenuItem("Exit");
     _exit.addActionListener(this);
     _menu.add(_exit);
+    
+    //Build the second menu.
+    JMenu editmenu = new JMenu("Edit");
+    _menuBar.add(editmenu);
+    
+    JMenuItem _undo = new JMenuItem("Undo");
+    _undo.addActionListener(this);
+    _undo.setAccelerator(KeyStroke.getKeyStroke(
+        'Z', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
+    _undo.setEnabled(false);
+    editmenu.add(_undo);
+    
+    JMenuItem _redo = new JMenuItem("Redo");
+    _redo.addActionListener(this);
+    _redo.setAccelerator(KeyStroke.getKeyStroke(
+        'Y', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
+    _redo.setEnabled(false);
+    editmenu.add(_redo);
     
     JButton _rgbRot = new JButton();
     _rgbRot.setActionCommand("RGB Rotate");
