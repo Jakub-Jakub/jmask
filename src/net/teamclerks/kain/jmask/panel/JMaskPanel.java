@@ -80,6 +80,48 @@ public class JMaskPanel extends JPanel implements Scrollable, MouseInputListener
     return this.zoomMultiplier;
   }
   
+  public void trimBox(int x, int y, int width, int height)
+  {
+    while(x < 0) 
+    {
+      x ++;
+      // Also, we assume the width will be skewed.
+      width --;
+    }
+    while(x > image.getWidth())
+    {
+      x --;
+    }
+    while(x + width < 0) 
+    {
+      width ++;
+    }
+    while(x + width > image.getWidth())
+    {
+      width --;
+    }
+    while(y < 0) 
+    {
+      y ++;
+      // Also, we assume the height will be skewed
+      height --;
+    }
+    while(y > image.getHeight())
+    {
+      y --;
+    }
+    while(y + height < 0) 
+    {
+      height ++;
+    }
+    while(y + height > image.getWidth())
+    {
+      height --;
+    }
+    rectToDraw = new Rectangle(x,y,width,height);
+    repaint();
+  }
+  
   public Rectangle getRectangle()
   {
     return rectToDraw;

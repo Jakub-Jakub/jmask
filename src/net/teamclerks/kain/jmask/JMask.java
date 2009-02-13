@@ -8,6 +8,7 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -219,6 +220,55 @@ public class JMask extends JFrame implements ActionListener
     try
     {
       if(panel.getImage() == null) return;
+      
+      if ( _button.equals("North+"))
+      {
+        Rectangle rectToDraw = panel.getRectangle();
+        if(rectToDraw == null) return;
+        panel.trimBox(rectToDraw.x, rectToDraw.y-1, rectToDraw.width, rectToDraw.height+1);
+      }
+      if ( _button.equals("North-"))
+      {
+        Rectangle rectToDraw = panel.getRectangle();
+        if(rectToDraw == null) return;
+        panel.trimBox(rectToDraw.x, rectToDraw.y+1, rectToDraw.width, rectToDraw.height-1);
+      }
+      if ( _button.equals("East+"))
+      {
+        Rectangle rectToDraw = panel.getRectangle();
+        if(rectToDraw == null) return;
+        panel.trimBox(rectToDraw.x, rectToDraw.y, rectToDraw.width+1, rectToDraw.height);
+      }
+      if ( _button.equals("East-"))
+      {
+        Rectangle rectToDraw = panel.getRectangle();
+        if(rectToDraw == null) return;
+        panel.trimBox(rectToDraw.x, rectToDraw.y, rectToDraw.width-1, rectToDraw.height);
+      }
+      if ( _button.equals("South+"))
+      {
+        Rectangle rectToDraw = panel.getRectangle();
+        if(rectToDraw == null) return;
+        panel.trimBox(rectToDraw.x, rectToDraw.y, rectToDraw.width, rectToDraw.height+1);
+      }
+      if ( _button.equals("South-"))
+      {
+        Rectangle rectToDraw = panel.getRectangle();
+        if(rectToDraw == null) return;
+        panel.trimBox(rectToDraw.x, rectToDraw.y, rectToDraw.width, rectToDraw.height-1);
+      }
+      if ( _button.equals("West+"))
+      {
+        Rectangle rectToDraw = panel.getRectangle();
+        if(rectToDraw == null) return;
+        panel.trimBox(rectToDraw.x-1, rectToDraw.y, rectToDraw.width+1, rectToDraw.height);
+      }
+      if ( _button.equals("West-"))
+      {
+        Rectangle rectToDraw = panel.getRectangle();
+        if(rectToDraw == null) return;
+        panel.trimBox(rectToDraw.x+1, rectToDraw.y, rectToDraw.width-1, rectToDraw.height);
+      }
       
       if ( _button.equals("Zoom In"))
       {
@@ -593,6 +643,58 @@ public class JMask extends JFrame implements ActionListener
         '-', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
     zoomOut.setEnabled(false);
     zoomMenu.add(zoomOut);
+
+    //Build the third menu.
+    JMenu trimMenu = new JMenu("Trim");
+    _menuBar.add(trimMenu);
+    
+    JMenuItem trimNorthUp = new JMenuItem("North+");
+    trimNorthUp.addActionListener(this);
+    trimNorthUp.setAccelerator(KeyStroke.getKeyStroke(
+        KeyEvent.VK_UP, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
+    trimMenu.add(trimNorthUp);
+    
+    JMenuItem trimNorthDown = new JMenuItem("North-");
+    trimNorthDown.addActionListener(this);
+    trimNorthDown.setAccelerator(KeyStroke.getKeyStroke(
+        KeyEvent.VK_NUMPAD8, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
+    trimMenu.add(trimNorthDown);
+    
+    JMenuItem trimEastUp = new JMenuItem("East+");
+    trimEastUp.addActionListener(this);
+    trimEastUp.setAccelerator(KeyStroke.getKeyStroke(
+        KeyEvent.VK_RIGHT, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
+    trimMenu.add(trimEastUp);
+    
+    JMenuItem trimEastDown = new JMenuItem("East-");
+    trimEastDown.addActionListener(this);
+    trimEastDown.setAccelerator(KeyStroke.getKeyStroke(
+        KeyEvent.VK_NUMPAD6, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
+    trimMenu.add(trimEastDown);
+    
+    JMenuItem trimSouthUp = new JMenuItem("South+");
+    trimSouthUp.addActionListener(this);
+    trimSouthUp.setAccelerator(KeyStroke.getKeyStroke(
+        KeyEvent.VK_DOWN, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
+    trimMenu.add(trimSouthUp);
+    
+    JMenuItem trimSouthDown = new JMenuItem("South-");
+    trimSouthDown.addActionListener(this);
+    trimSouthDown.setAccelerator(KeyStroke.getKeyStroke(
+        KeyEvent.VK_NUMPAD5, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
+    trimMenu.add(trimSouthDown);
+    
+    JMenuItem trimWestUp = new JMenuItem("West+");
+    trimWestUp.addActionListener(this);
+    trimWestUp.setAccelerator(KeyStroke.getKeyStroke(
+        KeyEvent.VK_LEFT, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
+    trimMenu.add(trimWestUp);
+    
+    JMenuItem trimWestDown = new JMenuItem("West-");
+    trimWestDown.addActionListener(this);
+    trimWestDown.setAccelerator(KeyStroke.getKeyStroke(
+        KeyEvent.VK_NUMPAD4, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),false) );
+    trimMenu.add(trimWestDown);
     
     JButton _rgbRot = new JButton();
     _rgbRot.setActionCommand("RGB Rotate");
