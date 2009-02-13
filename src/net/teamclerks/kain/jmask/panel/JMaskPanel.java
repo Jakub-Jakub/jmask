@@ -114,7 +114,7 @@ public class JMaskPanel extends JPanel implements Scrollable, MouseInputListener
     {
       height ++;
     }
-    while(y + height > image.getWidth())
+    while(y + height > image.getHeight())
     {
       height --;
     }
