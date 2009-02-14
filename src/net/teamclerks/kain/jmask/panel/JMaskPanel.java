@@ -30,12 +30,18 @@ public class JMaskPanel extends JPanel implements Scrollable, MouseInputListener
   
   private int zoomMultiplier;
   
+  private AffineTransform transform;
+  
+  private AffineTransformOp transOp;
+  
   public JMaskPanel()
   {
     zoomMultiplier = 1;
     currentRect = null;
     rectToDraw = null;
     previousRectDrawn = new Rectangle();
+    transform = new AffineTransform();
+    transOp = new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
   }
 
   protected void paintComponent(Graphics g)
@@ -64,9 +70,9 @@ public class JMaskPanel extends JPanel implements Scrollable, MouseInputListener
          multInput :
          (double)((double)1/(double)this.zoomMultiplier);
     this.zoomMultiplier = multInput;
-    AffineTransform transform = new AffineTransform();
+    transform.scale(1/transform.getScaleX(),1/transform.getScaleY());
     transform.scale(multInput, multInput);
-    AffineTransformOp transOp = 
+    transOp = 
       new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
     if(rectToDraw != null)
     {
@@ -145,9 +151,9 @@ public class JMaskPanel extends JPanel implements Scrollable, MouseInputListener
     }
     else
     {
-      AffineTransform transform = new AffineTransform();
+      transform.scale(1/transform.getScaleX(),1/transform.getScaleY());
       transform.scale(this.zoomMultiplier, this.zoomMultiplier);
-      AffineTransformOp transOp = 
+      transOp = 
         new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
       image = transOp.filter(originalImage, null);
     }
