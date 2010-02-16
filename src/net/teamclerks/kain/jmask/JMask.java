@@ -223,326 +223,105 @@ public class JMask extends JFrame implements ActionListener
       
       if ( _button.equals("North+"))
       {
-        Rectangle rectToDraw = panel.getRectangle();
-        if(rectToDraw == null) return;
-        panel.trimBox(rectToDraw.x, rectToDraw.y-1, rectToDraw.width, rectToDraw.height+1);
+        northPlus();
       }
       if ( _button.equals("North-"))
       {
-        Rectangle rectToDraw = panel.getRectangle();
-        if(rectToDraw == null) return;
-        panel.trimBox(rectToDraw.x, rectToDraw.y+1, rectToDraw.width, rectToDraw.height-1);
+        northMinus();
       }
       if ( _button.equals("East+"))
       {
-        Rectangle rectToDraw = panel.getRectangle();
-        if(rectToDraw == null) return;
-        panel.trimBox(rectToDraw.x, rectToDraw.y, rectToDraw.width+1, rectToDraw.height);
+        eastPlus();
       }
       if ( _button.equals("East-"))
       {
-        Rectangle rectToDraw = panel.getRectangle();
-        if(rectToDraw == null) return;
-        panel.trimBox(rectToDraw.x, rectToDraw.y, rectToDraw.width-1, rectToDraw.height);
+        eastMinus();
       }
       if ( _button.equals("South+"))
       {
-        Rectangle rectToDraw = panel.getRectangle();
-        if(rectToDraw == null) return;
-        panel.trimBox(rectToDraw.x, rectToDraw.y, rectToDraw.width, rectToDraw.height+1);
+        southPlus();
       }
       if ( _button.equals("South-"))
       {
-        Rectangle rectToDraw = panel.getRectangle();
-        if(rectToDraw == null) return;
-        panel.trimBox(rectToDraw.x, rectToDraw.y, rectToDraw.width, rectToDraw.height-1);
+        southMinus();
       }
       if ( _button.equals("West+"))
       {
-        Rectangle rectToDraw = panel.getRectangle();
-        if(rectToDraw == null) return;
-        panel.trimBox(rectToDraw.x-1, rectToDraw.y, rectToDraw.width+1, rectToDraw.height);
+        westPlus();
       }
       if ( _button.equals("West-"))
       {
-        Rectangle rectToDraw = panel.getRectangle();
-        if(rectToDraw == null) return;
-        panel.trimBox(rectToDraw.x+1, rectToDraw.y, rectToDraw.width-1, rectToDraw.height);
+        westMinus();
       }
       
       if ( _button.equals("Zoom In"))
       {
-        if(panel.getZoomMultiplier() < ZOOM_MULTIPLIER_MAX)
-        {
-          ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(1).setEnabled(true);
-          panel.setZoomMultiplier(panel.getZoomMultiplier()+1);
-          panel.setMaximumSize(new Dimension(panel.getWidth()*panel.getZoomMultiplier(),panel.getHeight()*panel.getZoomMultiplier()));
-          if(panel.getZoomMultiplier() == ZOOM_MULTIPLIER_MAX)
-          {
-            ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(0).setEnabled(false);
-          }
-          panel.revalidate();
-          repaint();
-        }
+        zoomIn();
       }
       if ( _button.equals("Zoom Out"))
       {
-        if(panel.getZoomMultiplier() > ZOOM_MULTIPLIER_MIN)
-        {
-          ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(0).setEnabled(true);
-          panel.setZoomMultiplier(panel.getZoomMultiplier()-1);
-          panel.setMaximumSize(new Dimension(panel.getWidth()*panel.getZoomMultiplier(),panel.getHeight()*panel.getZoomMultiplier()));
-          if(panel.getZoomMultiplier() == ZOOM_MULTIPLIER_MIN)
-          {
-            ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(1).setEnabled(false);
-          }
-          panel.revalidate();
-          repaint();
-        }
+        zoomOut();
       }
       if ( _button.equals("Undo"))
       {
-        if(actions.size() == 1)
-        {
-          ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(false);
-        }
-        // Bam... undo
-        MaskAction undo = actions.pop();
-        int zoomMultilplier = panel.getZoomMultiplier();
-        panel.setZoomMultiplier(1);
-        panel.setImage(undo.getMask().undoMask());
-        panel.setZoomMultiplier(zoomMultilplier);
-        redoActions.push(undo);
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(true);
-        panel.repaint();
+        undo();
       }
       if ( _button.equals("Redo"))
       {
-        if(redoActions.size() == 1)
-        {
-          ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        }
-        // Bam... redo
-        MaskAction redo = redoActions.pop();
-        int zoomMultilplier = panel.getZoomMultiplier();
-        panel.setZoomMultiplier(1);
-        panel.setImage(redo.getMask().mask());
-        panel.setZoomMultiplier(zoomMultilplier);
-        actions.push(redo);
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        redo();
       }
 
       if (prompt != null && object == prompt.getOkay())
       {
-        prompt.setVisible(false);
-        Rectangle box = panel.getScaledRectangle();
-        int x1 = box.x+box.width;
-        int y1 = box.y+box.height;
-        Mask mask = new CP(panel.getScaledImage(),box.x,box.y,x1,y1);
-        mask.setType(Type.MASK_TYPE_CP);
-        ((CP)mask).setCode(prompt.getCode());
-        panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
-        // Always clear the redo stack
-        redoActions.clear();
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        prompt.setCode("");
-        // Enable the undo menu item
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        cp();
       }
       if ( _button.equals("RGB Rotate"))
       {
-        Rectangle box = panel.getScaledRectangle();
-        int x1 = box.x+box.width;
-        int y1 = box.y+box.height;
-        Mask mask = new RGBRotate(panel.getScaledImage(),box.x,box.y,x1,y1);
-        mask.setType(Type.MASK_TYPE_ROTATE_RGB);
-        panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
-        // Always clear the redo stack
-        redoActions.clear();
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        // Enable the undo menu item
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        rgbRotate();
       }
       if ( _button.equals("XOR"))
       {
-        Rectangle box = panel.getScaledRectangle();
-        int x1 = box.x+box.width;
-        int y1 = box.y+box.height;
-        Mask mask = new Xor(panel.getScaledImage(),box.x,box.y,x1,y1);
-        mask.setType(Type.MASK_TYPE_XOR);
-        panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
-        // Always clear the redo stack
-        redoActions.clear();
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        // Enable the undo menu item
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        xor();
       }
       if ( _button.equals("Horizontal Flip"))
       {
-        Rectangle box = panel.getScaledRectangle();
-        int x1 = box.x+box.width;
-        int y1 = box.y+box.height;
-        Mask mask = new Flip(panel.getScaledImage(),box.x,box.y,x1,y1);
-        mask.setType(Type.MASK_TYPE_HFLIP);
-        panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
-        // Always clear the redo stack
-        redoActions.clear();
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        // Enable the undo menu item
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        hflip();
       }
       if ( _button.equals("Vertical Flip"))
       {
-        Rectangle box = panel.getScaledRectangle();
-        int x1 = box.x+box.width;
-        int y1 = box.y+box.height;
-        Mask mask = new Flip(panel.getScaledImage(),box.x,box.y,x1,y1);
-        mask.setType(Type.MASK_TYPE_VFLIP);
-        panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
-        // Always clear the redo stack
-        redoActions.clear();
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        // Enable the undo menu item
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        vflip();
       }
       if ( _button.equals("Negative"))
       {
-        Rectangle box = panel.getScaledRectangle();
-        int x1 = box.x+box.width;
-        int y1 = box.y+box.height;
-        Mask mask = new Negative(panel.getScaledImage(),box.x,box.y,x1,y1);
-        mask.setType(Type.MASK_TYPE_NEGATIVE);
-        panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
-        // Always clear the redo stack
-        redoActions.clear();
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        // Enable the undo menu item
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        neg();
       }
       if ( _button.equals("Vertical Glass"))
       {
-        Rectangle box = panel.getScaledRectangle();
-        int x1 = box.x+box.width;
-        int y1 = box.y+box.height;
-        Mask mask = new Glass(panel.getScaledImage(),box.x,box.y,x1,y1);
-        mask.setType(Type.MASK_TYPE_VGLASS);
-        panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
-        // Always clear the redo stack
-        redoActions.clear();
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        // Enable the undo menu item
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        vglass();
       }
       if ( _button.equals("Horizontal Glass"))
       {
-        Rectangle box = panel.getScaledRectangle();
-        int x1 = box.x+box.width;
-        int y1 = box.y+box.height;
-        Mask mask = new Glass(panel.getScaledImage(),box.x,box.y,x1,y1);
-        mask.setType(Type.MASK_TYPE_HGLASS);
-        panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
-        // Always clear the redo stack
-        redoActions.clear();
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        // Enable the undo menu item
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        hglass();
       }
       if ( _button.equals("Win"))
       {
-        Rectangle box = panel.getScaledRectangle();
-        int x1 = box.x+box.width;
-        int y1 = box.y+box.height;
-        Mask mask = new Win(panel.getScaledImage(),box.x,box.y,x1,y1);
-        mask.setType(Type.MASK_TYPE_WIN);
-        panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
-        // Always clear the redo stack
-        redoActions.clear();
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        // Enable the undo menu item
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        win();
       }
       if ( _button.equals("Meko-"))
       {
-        Rectangle box = panel.getScaledRectangle();
-        int x1 = box.x+box.width;
-        int y1 = box.y+box.height;
-        Mask mask = new Meko(panel.getScaledImage(),box.x,box.y,x1,y1);
-        mask.setType(Type.MASK_MEKO_MINUS);
-        panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
-        // Always clear the redo stack
-        redoActions.clear();
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        // Enable the undo menu item
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        mekoMinus();
       }
       if ( _button.equals("Meko+"))
       {
-        Rectangle box = panel.getScaledRectangle();
-        int x1 = box.x+box.width;
-        int y1 = box.y+box.height;
-        Mask mask = new Meko(panel.getScaledImage(),box.x,box.y,x1,y1);
-        mask.setType(Type.MASK_MEKO_PLUS);
-        panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
-        // Always clear the redo stack
-        redoActions.clear();
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        // Enable the undo menu item
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        mekoPlus();
       }
       if ( _button.equals("FL"))
       {
-        Rectangle box = panel.getScaledRectangle();
-        int x1 = box.x+box.width;
-        int y1 = box.y+box.height;
-        Mask mask = new FL(panel.getScaledImage(),box.x,box.y,x1,y1);
-        mask.setType(Type.MASK_TYPE_FL);
-        panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
-        // Always clear the redo stack
-        redoActions.clear();
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        // Enable the undo menu item
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        fl();
       }
       if ( _button.equals("Q0"))
       {
-        Rectangle box = panel.getScaledRectangle();
-        int x1 = box.x+box.width;
-        int y1 = box.y+box.height;
-        Mask mask = new Q0(panel.getScaledImage(),box.x,box.y,x1,y1);
-        mask.setType(Type.MASK_TYPE_Q0);
-        panel.setImage(mask.mask());
-        actions.push(new MaskAction(mask,panel.getScaledRectangle()));
-        // Always clear the redo stack
-        redoActions.clear();
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
-        // Enable the undo menu item
-        ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
-        panel.repaint();
+        q0();
       }
       if ( _button.equals("CP-PROMPT"))
       {
@@ -813,5 +592,364 @@ public class JMask extends JFrame implements ActionListener
   {
     JMask jmask = new JMask("JMask");
     jmask.setVisible(true);
+  }
+  
+  /// PRIVATE FILTERS ///
+  /**
+   * Undo action
+   * @throws MaskException
+   */
+  private void undo() throws MaskException
+  {
+    if(actions.size() == 1)
+    {
+      ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(false);
+    }
+    // Bam... undo
+    MaskAction undo = actions.pop();
+    int zoomMultilplier = panel.getZoomMultiplier();
+    panel.setZoomMultiplier(1);
+    panel.setImage(undo.getMask().undoMask());
+    panel.setZoomMultiplier(zoomMultilplier);
+    redoActions.push(undo);
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(true);
+    panel.repaint();
+  }
+  
+  private void northPlus() throws MaskException
+  {
+    Rectangle rectToDraw = panel.getRectangle();
+    if(rectToDraw == null) return;
+    panel.trimBox(rectToDraw.x, rectToDraw.y-1, rectToDraw.width, rectToDraw.height+1);
+  }
+  private void northMinus() throws MaskException
+  {
+    Rectangle rectToDraw = panel.getRectangle();
+    if(rectToDraw == null) return;
+    panel.trimBox(rectToDraw.x, rectToDraw.y+1, rectToDraw.width, rectToDraw.height-1);
+  }
+  private void eastPlus() throws MaskException
+  {
+    Rectangle rectToDraw = panel.getRectangle();
+    if(rectToDraw == null) return;
+    panel.trimBox(rectToDraw.x, rectToDraw.y, rectToDraw.width+1, rectToDraw.height);
+  }
+  private void eastMinus() throws MaskException
+  {
+    Rectangle rectToDraw = panel.getRectangle();
+    if(rectToDraw == null) return;
+    panel.trimBox(rectToDraw.x, rectToDraw.y, rectToDraw.width-1, rectToDraw.height);
+  }
+  private void southPlus() throws MaskException
+  {
+    Rectangle rectToDraw = panel.getRectangle();
+    if(rectToDraw == null) return;
+    panel.trimBox(rectToDraw.x, rectToDraw.y, rectToDraw.width, rectToDraw.height+1);
+  }
+  private void southMinus() throws MaskException
+  {
+    Rectangle rectToDraw = panel.getRectangle();
+    if(rectToDraw == null) return;
+    panel.trimBox(rectToDraw.x, rectToDraw.y, rectToDraw.width, rectToDraw.height-1);
+  }
+  private void westPlus() throws MaskException
+  {
+    Rectangle rectToDraw = panel.getRectangle();
+    if(rectToDraw == null) return;
+    panel.trimBox(rectToDraw.x-1, rectToDraw.y, rectToDraw.width+1, rectToDraw.height); 
+  }
+  private void westMinus() throws MaskException
+  {
+    Rectangle rectToDraw = panel.getRectangle();
+    if(rectToDraw == null) return;
+    panel.trimBox(rectToDraw.x+1, rectToDraw.y, rectToDraw.width-1, rectToDraw.height);
+  }
+  
+  /**
+   * Zooms in.
+   * @throws MaskException
+   */
+  private void zoomIn() throws MaskException
+  {
+    if(panel.getZoomMultiplier() < ZOOM_MULTIPLIER_MAX)
+    {
+      ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(1).setEnabled(true);
+      panel.setZoomMultiplier(panel.getZoomMultiplier()+1);
+      panel.setMaximumSize(new Dimension(panel.getWidth()*panel.getZoomMultiplier(),panel.getHeight()*panel.getZoomMultiplier()));
+      if(panel.getZoomMultiplier() == ZOOM_MULTIPLIER_MAX)
+      {
+        ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(0).setEnabled(false);
+      }
+      panel.revalidate();
+      repaint();
+    }
+  }
+  /**
+   * Zooms out.
+   * @throws MaskException
+   */
+  private void zoomOut() throws MaskException
+  {
+    if(panel.getZoomMultiplier() > ZOOM_MULTIPLIER_MIN)
+    {
+      ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(0).setEnabled(true);
+      panel.setZoomMultiplier(panel.getZoomMultiplier()-1);
+      panel.setMaximumSize(new Dimension(panel.getWidth()*panel.getZoomMultiplier(),panel.getHeight()*panel.getZoomMultiplier()));
+      if(panel.getZoomMultiplier() == ZOOM_MULTIPLIER_MIN)
+      {
+        ((JMenu)this.getJMenuBar().getComponents()[2]).getMenuComponent(1).setEnabled(false);
+      }
+      panel.revalidate();
+      repaint();
+    }
+  }
+  
+  /**
+   * Redo from the action stack.
+   * @throws MaskException
+   */
+  private void redo() throws MaskException
+  {
+    if(redoActions.size() == 1)
+    {
+      ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    }
+    // Bam... redo
+    MaskAction redo = redoActions.pop();
+    int zoomMultilplier = panel.getZoomMultiplier();
+    panel.setZoomMultiplier(1);
+    panel.setImage(redo.getMask().mask());
+    panel.setZoomMultiplier(zoomMultilplier);
+    actions.push(redo);
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
+  }
+  
+  /**
+   * Applies the CP mask with a known code.
+   * @throws MaskException
+   */
+  private void cp() throws MaskException
+  {
+    prompt.setVisible(false);
+    Rectangle box = panel.getScaledRectangle();
+    int x1 = box.x+box.width;
+    int y1 = box.y+box.height;
+    Mask mask = new CP(panel.getScaledImage(),box.x,box.y,x1,y1);
+    mask.setType(Type.MASK_TYPE_CP);
+    ((CP)mask).setCode(prompt.getCode());
+    panel.setImage(mask.mask());
+    actions.push(new MaskAction(mask,panel.getScaledRectangle()));
+    // Always clear the redo stack
+    redoActions.clear();
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    prompt.setCode("");
+    // Enable the undo menu item
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
+  }
+  
+  private void rgbRotate() throws MaskException
+  {
+    Rectangle box = panel.getScaledRectangle();
+    int x1 = box.x+box.width;
+    int y1 = box.y+box.height;
+    Mask mask = new RGBRotate(panel.getScaledImage(),box.x,box.y,x1,y1);
+    mask.setType(Type.MASK_TYPE_ROTATE_RGB);
+    panel.setImage(mask.mask());
+    actions.push(new MaskAction(mask,panel.getScaledRectangle()));
+    // Always clear the redo stack
+    redoActions.clear();
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    // Enable the undo menu item
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
+  }
+  
+  private void xor() throws MaskException
+  {
+    Rectangle box = panel.getScaledRectangle();
+    int x1 = box.x+box.width;
+    int y1 = box.y+box.height;
+    Mask mask = new Xor(panel.getScaledImage(),box.x,box.y,x1,y1);
+    mask.setType(Type.MASK_TYPE_XOR);
+    panel.setImage(mask.mask());
+    actions.push(new MaskAction(mask,panel.getScaledRectangle()));
+    // Always clear the redo stack
+    redoActions.clear();
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    // Enable the undo menu item
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
+  }
+  
+  private void hflip() throws MaskException
+  {
+    Rectangle box = panel.getScaledRectangle();
+    int x1 = box.x+box.width;
+    int y1 = box.y+box.height;
+    Mask mask = new Flip(panel.getScaledImage(),box.x,box.y,x1,y1);
+    mask.setType(Type.MASK_TYPE_HFLIP);
+    panel.setImage(mask.mask());
+    actions.push(new MaskAction(mask,panel.getScaledRectangle()));
+    // Always clear the redo stack
+    redoActions.clear();
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    // Enable the undo menu item
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
+  }
+  
+  private void vflip() throws MaskException
+  {
+    Rectangle box = panel.getScaledRectangle();
+    int x1 = box.x+box.width;
+    int y1 = box.y+box.height;
+    Mask mask = new Flip(panel.getScaledImage(),box.x,box.y,x1,y1);
+    mask.setType(Type.MASK_TYPE_VFLIP);
+    panel.setImage(mask.mask());
+    actions.push(new MaskAction(mask,panel.getScaledRectangle()));
+    // Always clear the redo stack
+    redoActions.clear();
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    // Enable the undo menu item
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
+  }
+  
+  private void neg() throws MaskException
+  {
+    Rectangle box = panel.getScaledRectangle();
+    int x1 = box.x+box.width;
+    int y1 = box.y+box.height;
+    Mask mask = new Negative(panel.getScaledImage(),box.x,box.y,x1,y1);
+    mask.setType(Type.MASK_TYPE_NEGATIVE);
+    panel.setImage(mask.mask());
+    actions.push(new MaskAction(mask,panel.getScaledRectangle()));
+    // Always clear the redo stack
+    redoActions.clear();
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    // Enable the undo menu item
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
+  }
+  
+  private void vglass() throws MaskException
+  {
+    Rectangle box = panel.getScaledRectangle();
+    int x1 = box.x+box.width;
+    int y1 = box.y+box.height;
+    Mask mask = new Glass(panel.getScaledImage(),box.x,box.y,x1,y1);
+    mask.setType(Type.MASK_TYPE_VGLASS);
+    panel.setImage(mask.mask());
+    actions.push(new MaskAction(mask,panel.getScaledRectangle()));
+    // Always clear the redo stack
+    redoActions.clear();
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    // Enable the undo menu item
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
+  }
+  
+  private void hglass() throws MaskException
+  {
+    Rectangle box = panel.getScaledRectangle();
+    int x1 = box.x+box.width;
+    int y1 = box.y+box.height;
+    Mask mask = new Glass(panel.getScaledImage(),box.x,box.y,x1,y1);
+    mask.setType(Type.MASK_TYPE_HGLASS);
+    panel.setImage(mask.mask());
+    actions.push(new MaskAction(mask,panel.getScaledRectangle()));
+    // Always clear the redo stack
+    redoActions.clear();
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    // Enable the undo menu item
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
+  }
+  
+  private void win() throws MaskException
+  {
+    Rectangle box = panel.getScaledRectangle();
+    int x1 = box.x+box.width;
+    int y1 = box.y+box.height;
+    Mask mask = new Win(panel.getScaledImage(),box.x,box.y,x1,y1);
+    mask.setType(Type.MASK_TYPE_WIN);
+    panel.setImage(mask.mask());
+    actions.push(new MaskAction(mask,panel.getScaledRectangle()));
+    // Always clear the redo stack
+    redoActions.clear();
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    // Enable the undo menu item
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
+  }
+  
+  private void mekoMinus() throws MaskException
+  {
+    Rectangle box = panel.getScaledRectangle();
+    int x1 = box.x+box.width;
+    int y1 = box.y+box.height;
+    Mask mask = new Meko(panel.getScaledImage(),box.x,box.y,x1,y1);
+    mask.setType(Type.MASK_MEKO_MINUS);
+    panel.setImage(mask.mask());
+    actions.push(new MaskAction(mask,panel.getScaledRectangle()));
+    // Always clear the redo stack
+    redoActions.clear();
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    // Enable the undo menu item
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
+  }
+  
+  private void mekoPlus() throws MaskException
+  {
+    Rectangle box = panel.getScaledRectangle();
+    int x1 = box.x+box.width;
+    int y1 = box.y+box.height;
+    Mask mask = new Meko(panel.getScaledImage(),box.x,box.y,x1,y1);
+    mask.setType(Type.MASK_MEKO_PLUS);
+    panel.setImage(mask.mask());
+    actions.push(new MaskAction(mask,panel.getScaledRectangle()));
+    // Always clear the redo stack
+    redoActions.clear();
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    // Enable the undo menu item
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
+  }
+  
+  private void fl() throws MaskException
+  {
+    Rectangle box = panel.getScaledRectangle();
+    int x1 = box.x+box.width;
+    int y1 = box.y+box.height;
+    Mask mask = new FL(panel.getScaledImage(),box.x,box.y,x1,y1);
+    mask.setType(Type.MASK_TYPE_FL);
+    panel.setImage(mask.mask());
+    actions.push(new MaskAction(mask,panel.getScaledRectangle()));
+    // Always clear the redo stack
+    redoActions.clear();
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    // Enable the undo menu item
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
+  }
+  
+  private void q0() throws MaskException
+  {
+    Rectangle box = panel.getScaledRectangle();
+    int x1 = box.x+box.width;
+    int y1 = box.y+box.height;
+    Mask mask = new Q0(panel.getScaledImage(),box.x,box.y,x1,y1);
+    mask.setType(Type.MASK_TYPE_Q0);
+    panel.setImage(mask.mask());
+    actions.push(new MaskAction(mask,panel.getScaledRectangle()));
+    // Always clear the redo stack
+    redoActions.clear();
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(1).setEnabled(false);
+    // Enable the undo menu item
+    ((JMenu)this.getJMenuBar().getComponents()[1]).getMenuComponent(0).setEnabled(true);
+    panel.repaint();
   }
 }
